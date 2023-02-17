@@ -1,0 +1,79 @@
+##The Number of Covid Case Percentage Per Country Population
+
+SELECT 
+location,
+date,
+population,
+total_cases,
+(total_cases/population)*100 AS Covid_Per_Pop,
+FROM `covid-19-analysis-378116.Covid_Deaths.Covid_Deaths`
+WHERE continent NOT IN ('Null')
+ORDER BY 1,2
+
+##The Percentage of Covid Deaths From the Covid Cases Per Country
+
+SELECT 
+location,
+date,
+total_cases,
+total_deaths,
+(total_deaths/total_cases)*100 AS Death_Percentage
+FROM `covid-19-analysis-378116.Covid_Deaths.Covid_Deaths`
+WHERE continent NOT IN ('Null')
+ORDER BY 1,2
+
+##The Total Death Count Per Continent
+
+SELECT  
+continent,
+Max(total_deaths) AS Total_Death_Count,
+FROM `covid-19-analysis-378116.Covid_Deaths.Covid_Deaths`
+WHERE continent Not in ('Null')
+GROUP BY continent
+ORDER BY Total_Death_Count DESC
+
+##The Percentage of Global Death Count Per Date
+
+SELECT 
+date,
+SUM(new_cases) as Global_Cases,
+SUM(new_deaths) as Global_Deaths,
+SUM(new_deaths)/SUM(new_cases)*100 as Global_Death_Per
+FROM `covid-19-analysis-378116.Covid_Deaths.Covid_Deaths`
+WHERE continent NOT IN ('Null')
+GROUP BY date
+ORDER BY 1,2
+
+##The Highest Infection & Death Count Per Population
+
+SELECT 
+location,
+population,
+Max(total_cases) AS Highest_Inf_Count,
+MAX((total_cases/population))*100 AS Covid_Per_Pop,
+Max(total_deaths) AS Total_Death_Count,
+FROM `covid-19-analysis-378116.Covid_Deaths.Covid_Deaths`
+WHERE continent Not in ('Null')
+GROUP BY location, population
+ORDER BY Total_Death_Count DESC
+
+##The Percentage of Vaccinations Per Population using a CTE
+
+WITH PopVsVac
+as 
+(
+SELECT 
+  dea.continent,
+  dea.location,
+  dea.date,
+  dea.population,
+  vac.new_vaccinations,
+SUM(vac.new_vaccinations) OVER (PARTITION BY dea.location ORDER BY dea.location,dea.date) as Rolling_People_Vac,
+ FROM `covid-19-analysis-378116.Covid_Deaths.Covid_Deaths` dea
+ JOIN `covid-19-analysis-378116.Covid_Vac.Covid_Vac` vac 
+ ON dea.location = vac.location
+ AND dea.date = vac.date
+ WHERE dea.continent NOT IN ('Null')
+)
+SELECT *, (Rolling_People_Vac/Population)*100 AS Percent_Vac_Per_Pop
+From PopVsVac
