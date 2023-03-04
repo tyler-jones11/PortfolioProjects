@@ -1,3 +1,10 @@
+/*
+Covid-19 Data Exploration
+
+Skills Used: JOINS, Windows Functions, Aggregate Functions, CTE
+
+*/
+
 ##The Number of Covid Case Percentage Per Country Population
 
 SELECT 
