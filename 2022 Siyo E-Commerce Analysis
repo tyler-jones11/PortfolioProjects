@@ -1,0 +1,117 @@
+/*
+Siyo Boutique Data Exploration
+
+Skills Used: Windows Functions, Aggregate Functions, Case Statements
+
+*/
+
+-- Sales & Orders Per Product: The Sum of Sales Per Product & The Sum of Orders Per Product
+
+SELECT
+  Order_ID,
+  DATE(Date) AS Date,
+  Transaction_type,
+  Product_type,
+  TRIM(Order_Num,"#") AS Order_Num,
+  CAST(Total_sales AS numeric) AS Total_Sales_Dollar,
+  CASE
+    WHEN Product_type = 'Love Card' THEN 'Greeting Cards'
+    WHEN Product_type = 'Mom Card' THEN 'Greeting Cards'
+    WHEN Product_type = 'Baby Card' THEN 'Greeting Cards'
+    WHEN Product_type = 'Birthday Cards' THEN 'Greeting Cards'
+    WHEN Product_type = 'Life Occasions' THEN 'Greeting Cards'
+    WHEN Product_type = 'Wedding Card' THEN 'Greeting Cards'
+    WHEN Product_type = 'Holiday Card' THEN 'Greeting Cards'
+    WHEN Product_type = 'Dad Cards' THEN 'Greeting Cards'
+    WHEN Product_type = 'Sticker' THEN 'Stickers'
+    WHEN Product_type = 'Phone Case' THEN 'Phone Cases'
+    WHEN Product_type = 'Calendars, Organizers & Planners' THEN 'Calendars'
+    WHEN Product_type = 'Shirts' THEN 'Apparel'
+    WHEN Product_type = 'Sweatshirt' THEN 'Apparel'
+    WHEN Product_type = 'Notepad' THEN 'Notepads'
+    WHEN Product_type = 'Print' THEN 'Prints'
+    WHEN Product_type = 'Gifts Wrap' THEN 'Gift Wraps'
+    WHEN Product_type = 'Bookmark' THEN 'Bookmarks'
+    WHEN Product_type = 'Mugs' THEN 'Mugs'
+    WHEN Product_type = 'Magnet' THEN 'Magnets'
+    WHEN Product_type = 'Earrings' THEN 'Earrings'
+    WHEN Product_type = 'Button' THEN 'Buttons'
+    WHEN Product_type = 'Keychain' THEN 'Keychains'
+    WHEN Product_type = 'Pocket Mirror' THEN 'Mirrors'
+    WHEN Product_type = 'Pins' THEN 'Acrylic Pins'
+  END as Product
+  FROM `siyoboutique-analysis2022.Sales_Data.Sales_Data` 
+  WHERE
+  Transaction_type NOT IN ('shipping')
+  AND Transaction_type NOT IN ('unknown')
+  ORDER BY
+    Date ASC
+    
+-- Product Information: Amount of Orders Per Product Type - Used to Determine Top 10 Products & Best Selling Greeting Card
+
+SELECT
+Product_type,
+COUNT(Product_type) AS Orders_Per_Product,
+FROM `siyoboutique-analysis2022.Sales_Data.Sales_Data`
+WHERE
+Transaction_type NOT IN ('Shipping')
+AND Product_type NOT IN ('Null')
+GROUP BY
+Product_type
+ORDER BY
+Orders_Per_Product DESC
+
+-- Customer Information: Amount of Orders Per Customer - Used to Determine Top 10 Customers & Orders By Location 
+
+SELECT
+CONCAT(First_Name,' ',Last_Name) AS Customer_Name,
+City,
+Province AS State,
+SPLIT(Order_Num,',')[OFFSET(0)] AS Order_Num_1,
+SPLIT(Order_Num,', ')[SAFE_OFFSET(1)] AS Order_Num_2,
+SPLIT(Order_Num,', ')[SAFE_OFFSET(2)] AS Order_Num_3,
+Total_Orders
+ FROM `siyoboutique-analysis2022.Sales_Data.customer_data`
+WHERE
+First_Name NOT IN ('Null')
+AND Order_Num NOT IN ('Null')
+ORDER BY
+order_num ASC
+
+-- Monthly Sales: Total of Sales in Dollars Per Month - Used to Determine the Highest & Lowest Sales Month
+
+select
+extract(month from date) AS Month,
+Sum(CAST(total_sales as Numeric)) AS Monthly_Total_Sales,
+MIN(total_sales) AS Min_Sale,
+MAX(total_sales) AS Max_Sale
+from `siyoboutique-analysis2022.Sales_Data.Sales_Data`
+WHERE
+  Transaction_type NOT IN ('shipping')
+GROUP BY Month
+ORDER BY Month;
+
+-- Traffic Source: Total Orders from Referring Category - Used to Determine Where Customers Found Website & Conversion Rate For Each
+
+SELECT
+referring_channel,
+referring_category,
+CAST(total_orders_placed as numeric) AS Total_Orders,
+SUM(total_orders_placed/total_sessions)*100 AS Conversion_Rate_Per
+FROM `siyoboutique-analysis2022.Sales_Data.Marketing_Data`
+WHERE referring_channel NOT IN ('Null')
+AND total_orders_placed > 0
+GROUP BY 
+referring_channel,
+referring_category,
+total_orders_placed
+ORDER BY
+total_orders_placed DESC
+
+-- Total Orders & Sales: Calculated the Total Annual Orders and Sales, and the Average Order Value
+
+SELECT 
+COUNT (DISTINCT Order_ID) AS `Total_Annual_Orders`,
+SUM(CAST(Total_sales AS numeric)) AS `Total_Annual_Sales`,
+AVG(CAST(Total_sales AS numeric)) AS Average_Order_Value,
+FROM `siyoboutique-analysis2022.Sales_Data.Sales_Data`
